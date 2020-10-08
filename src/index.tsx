@@ -4,9 +4,28 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+var data = [
+  { label: 'Bob', value: 33, color: 'red' },
+  { label: 'Robin', value: 12, color: 'red' },
+  { label: 'Anne', value: 41, color: 'red' },
+  { label: 'Mark', value: 16, color: 'red' },
+  { label: 'Joe', value: 59, color: 'red' },
+  { label: 'Eve', value: 38, color: 'red' },
+  { label: 'Karen', value: 21, color: 'red' },
+  { label: 'Kirsty', value: 25, color: 'red' },
+  { label: 'Chris', value: 30, color: 'red' },
+  { label: 'Lisa', value: 47, color: 'red' },
+  { label: 'Tom', value: 5, color: 'red' },
+  { label: 'Stacy', value: 20, color: 'red' },
+  { label: 'Charles', value: 13, color: 'orange' },
+  { label: 'Mary', value: 29, color: 'yellow' },
+];
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <div className="container">
+      <App data={data} clickableBars={true} />
+    </div>
   </React.StrictMode>,
   document.getElementById('root')
 );
