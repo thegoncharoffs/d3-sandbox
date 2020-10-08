@@ -16,7 +16,7 @@ var data = [
   { label: 'Chris', value: 30, color: 'red' },
   { label: 'Lisa', value: 47, color: 'red' },
   { label: 'Tom', value: 5, color: 'red' },
-  { label: 'Stacy', value: 20, color: 'red' },
+  { label: 'Stacy', value: 0, color: 'red' },
   { label: 'Charles', value: 13, color: 'orange' },
   { label: 'Mary', value: 29, color: 'yellow' },
 ];
@@ -24,7 +24,14 @@ var data = [
 ReactDOM.render(
   <React.StrictMode>
     <div className="container">
-      <App data={data} clickableBars={true} />
+      <App
+        data={data}
+        showLabels={true}
+        showCounts={true}
+        clickableBars={true}
+        countsAlign={'right'}
+        animationDuration={500}
+      />
     </div>
   </React.StrictMode>,
   document.getElementById('root')

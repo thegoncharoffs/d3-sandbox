@@ -3,34 +3,39 @@ import * as d3 from 'd3';
 import classNames from 'classnames';
 import './App.css';
 
-enum BarVerticalAlignment {
-  SpaceBetween,
-  Top,
-  Bottom,
-}
-
 type Props = {
   data: any[];
   barWidth?: number;
-  barVerticalAlignment?: BarVerticalAlignment;
   clickableBars?: boolean;
+  countsAlign?: 'left' | 'right';
+  animationDuration?: number;
+  showLabels?: boolean;
+  showCounts?: boolean;
 };
 
-const App: FC<Props> = ({ data, barWidth = 4, clickableBars }) => {
+const App: FC<Props> = ({
+  data,
+  barWidth = 8,
+  clickableBars,
+  countsAlign = 'right',
+  animationDuration = 300,
+  showLabels = false,
+  showCounts = false,
+}) => {
   const container = useRef<SVGSVGElement>(null);
 
   const classes = classNames('container-fluid', {
     'clickable-bars': clickableBars,
   });
 
-  const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-  let chart: any;
+  const margin = { top: 20, right: 80, bottom: 30, left: 80 };
+  let bars: any;
   let width: any;
   let height: any;
   let xScale: any;
   let yScale: any;
-  let xAxis: any;
-  let yAxis: any;
+  let counts: any;
+  let labels: any;
   let xDomain: any;
   let yDomain: any;
 
@@ -55,20 +60,20 @@ const App: FC<Props> = ({ data, barWidth = 4, clickableBars }) => {
     xDomain = [0, d3.max(data, (d) => d.value) as number];
     yDomain = data.map((d) => d.label);
 
-    xAxis = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top + height})`);
-
-    yAxis = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-    chart = svg
+    bars = svg
       .append('g')
       .attr('class', 'bars')
       .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-    xScale = d3.scaleLinear().domain(xDomain).range([width, 0]);
+    counts = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+    labels = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+    xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
 
     yScale = d3
       .scaleBand()
@@ -79,29 +84,75 @@ const App: FC<Props> = ({ data, barWidth = 4, clickableBars }) => {
 
   const drawBars = (): void => {
     // Draw bars
-    chart
+    bars
       .selectAll('.bar')
       .data(data)
       .enter()
       .append('rect')
       .attr('class', 'bar')
-      .attr('rx', 2)
-      .attr('ry', 2)
+      .attr('rx', 3)
+      .attr('ry', 3)
       .attr('fill', (d: any) => d.color)
-      .attr('x', () => 0)
+      .attr('x', () => 2)
       .attr('y', (d: any) => yScale(d.label))
-      .attr('width', (d: any) => 1)
       .attr('height', () => (barWidth ? barWidth : yScale.bandwidth()))
       .attr('value', (d: any) => d.value);
 
     // Animate bars
-    chart
+    bars
       .selectAll('.bar')
       .transition()
-      .duration(300)
-      .attr('width', (d: any) => width - xScale(d.value))
+      .duration(animationDuration)
+      .attr('width', (d: any) => xScale(d.value))
       .delay(100);
     // .delay((d: any, i: number) => i * 100);
+  };
+
+  const drawCounts = (): void => {
+    counts
+      .selectAll('.count')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'count')
+      .attr('x', (d: any) => 0)
+      .attr('y', (d: any) => yScale(d.label) + 6 + barWidth / 2)
+      .attr('font-size', '16px')
+      .attr('font-weight', '700')
+      .attr('fill', 'blue')
+      .attr('text-anchor', countsAlign === 'right' ? 'start' : 'end')
+      // .attr('height', () => (barWidth ? barWidth : yScale.bandwidth()))
+      .text((d: any) => 0);
+
+    counts
+      .selectAll('.count')
+      .transition()
+      .duration(animationDuration)
+      .attr('x', (d: any) =>
+        countsAlign === 'right' ? xScale(d.value) + (d.value === 0 ? 0 : 8) : -8
+      )
+      .tween('text', function (d: any, i: any, n: any) {
+        const interpolator = d3.interpolateNumber(0, d.value); // d3 interpolator
+        const selection = d3.select(n[i]);
+        return (t: any) => selection.text(Math.round(interpolator(t))); // return value
+      })
+      .delay(100);
+  };
+
+  const drawLabels = (): void => {
+    labels
+      .selectAll('.count')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'count')
+      .attr('x', (d: any) => -8)
+      .attr('y', (d: any) => yScale(d.label) + 6 + barWidth / 2)
+      .attr('font-size', '16px')
+      .attr('font-weight', '700')
+      .attr('fill', 'grey')
+      .attr('text-anchor', 'end')
+      .text((d: any) => d.label);
   };
 
   const clickHandler = (event: MouseEvent): void => {
@@ -120,6 +171,12 @@ const App: FC<Props> = ({ data, barWidth = 4, clickableBars }) => {
     if (data && container.current) {
       createChart();
       drawBars();
+      if (showCounts) {
+        drawCounts();
+      }
+      if (showLabels) {
+        drawLabels();
+      }
 
       container.current.removeEventListener('click', clickHandler);
       container.current.addEventListener('click', clickHandler);
