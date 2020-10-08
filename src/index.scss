@@ -1,0 +1,28 @@
+@import './assets/mixins/font-face';
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.container {
+  padding: 20px;
+  width: 500px;
+  height: 500px;
+}
+
+// Including fonts
+@include font-face(Roboto, '../fonts/Roboto/Roboto-Light', 200);
+@include font-face(Roboto, '../fonts/Roboto/Roboto-Thin', 300);
+@include font-face(Roboto, '../fonts/Roboto/Roboto-Regular', 400);
+@include font-face(Roboto, '../fonts/Roboto/Roboto-Medium', 500);
+@include font-face(Roboto, '../fonts/Roboto/Roboto-Bold', 700);
