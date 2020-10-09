@@ -12,6 +12,7 @@ type Props = {
   clickableBars?: boolean;
   loading?: boolean;
   barWidth?: number;
+  barGutter?: number;
   animationDuration?: number;
   animationStepDelay?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -28,9 +29,10 @@ const App: FC<Props> = ({
   clickableBars = false,
   loading = false,
   barWidth = 8,
+  barGutter = 16,
   animationDuration = 300,
   animationStepDelay = 0,
-  margin = { top: 20, right: 80, bottom: 20, left: 40 },
+  margin = { top: 10, right: 40, bottom: 10, left: 40 },
   fontSize = 14,
   onChartClick,
 }) => {
@@ -60,7 +62,7 @@ const App: FC<Props> = ({
 
     width = element.clientWidth - margin.left - margin.right;
     height = element.clientHeight - margin.top - margin.bottom;
-    height = Math.min(height, (barWidth + 16) * data.length);
+    height = Math.min(height, (barWidth + barGutter) * data.length);
 
     // Clear previous graph
     d3.select(element).selectAll('*').remove();
@@ -118,83 +120,129 @@ const App: FC<Props> = ({
   };
 
   const drawCounts = (): void => {
-    counts
-      .selectAll('.count')
-      .data(data)
-      .enter()
-      .append('text')
-      .attr('class', 'count')
-      .attr('x', () => 0)
-      .attr('y', (d: any) => yScale(d.label) + fontSize / 4 + barWidth / 2)
-      .attr('font-family', 'Roboto')
-      .attr('font-size', fontSize + 'px')
-      .attr('font-weight', 'normal')
-      .attr('fill', '#1556BB')
-      .attr('text-anchor', 'start');
+    if (loading) {
+      counts
+        .selectAll('.count-skeleton')
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('class', 'count-skeleton')
+        .attr('x', () => 0)
+        .attr('y', (d: any) => yScale(d.label) - fontSize / 2 + barWidth / 2)
+        .attr('width', fontSize * 2)
+        .attr('height', fontSize)
+        .attr('fill', '#E5F8FF');
 
-    counts
-      .selectAll('.count')
-      .transition()
-      .duration(animationDuration)
-      .attr('x', (d: any) => xScale(d.value) + (d.value === 0 ? 0 : 8))
-      .tween('text', function (d: any, i: any, n: any) {
-        const interpolator = d3.interpolateNumber(0, d.value); // d3 interpolator
-        const selection = d3.select(n[i]);
-        return (t: any) =>
-          selection.text(loading ? 'xx' : Math.round(interpolator(t))); // return value
-      })
-      .delay((d: any, i: number) => i * animationStepDelay);
+      counts
+        .selectAll('.count-skeleton')
+        .transition()
+        .duration(animationDuration)
+        .attr('x', (d: any) => xScale(d.value) + (d.value === 0 ? 0 : 8))
+        .delay((d: any, i: number) => i * animationStepDelay);
+    } else {
+      counts
+        .selectAll('.count')
+        .data(data)
+        .enter()
+        .append('text')
+        .attr('class', 'count')
+        .attr('x', () => 0)
+        .attr('y', (d: any) => yScale(d.label) + barWidth / 2)
+        .attr('font-family', 'Roboto')
+        .attr('font-size', fontSize + 'px')
+        .attr('font-weight', 'normal')
+        .attr('fill', '#1556BB')
+        .attr('text-anchor', 'start')
+        .attr('alignment-baseline', 'middle');
+
+      counts
+        .selectAll('.count')
+        .transition()
+        .duration(animationDuration)
+        .attr('x', (d: any) => xScale(d.value) + (d.value === 0 ? 0 : 8))
+        .tween('text', function (d: any, i: any, n: any) {
+          const interpolator = d3.interpolateNumber(0, d.value); // d3 interpolator
+          const selection = d3.select(n[i]);
+          return (t: any) =>
+            selection.text(loading ? 'xx' : Math.round(interpolator(t))); // return value
+        })
+        .delay((d: any, i: number) => i * animationStepDelay);
+    }
   };
 
   const drawLabels = (): void => {
-    labels
-      .selectAll('.label')
-      .data(data)
-      .enter()
-      .append('text')
-      .attr('class', 'label')
-      .attr('x', () => 0)
-      .attr('y', (d: any) => yScale(d.label) + fontSize / 4 + barWidth / 2)
-      .attr('font-family', 'Roboto')
-      .attr('font-size', fontSize + 'px')
-      .attr('font-weight', 'normal')
-      .attr('fill', showCountsInsteadLabels ? '#1556BB' : '#7F828A')
-      .attr('text-anchor', 'start')
-      .text((d: any) =>
-        showCountsInsteadLabels ? (loading ? 'xx' : d.value) : d.label
-      );
+    if (loading) {
+      labels
+        .selectAll('.label-skeleton')
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('class', 'label-skeleton')
+        .attr('x', () => 0)
+        .attr('y', (d: any) => yScale(d.label) - fontSize / 2 + barWidth / 2)
+        .attr('width', fontSize * 2)
+        .attr('height', fontSize)
+        .attr('fill', showCountsInsteadLabels ? '#E5F8FF' : '#DDE0E6');
+    } else {
+      labels
+        .selectAll('.label')
+        .data(data)
+        .enter()
+        .append('text')
+        .attr('class', 'label')
+        .attr('x', () => 0)
+        .attr('y', (d: any) => yScale(d.label) + barWidth / 2)
+        .attr('font-family', 'Roboto')
+        .attr('font-size', fontSize + 'px')
+        .attr('font-weight', 'normal')
+        .attr('fill', showCountsInsteadLabels ? '#1556BB' : '#7F828A')
+        .attr('text-anchor', 'start')
+        .attr('alignment-baseline', 'middle')
+        .text((d: any) =>
+          showCountsInsteadLabels ? (loading ? 'xx' : d.value) : d.label
+        );
+    }
   };
 
   const drawTotal = (): void => {
-    total
-      .append('text')
-      .attr('class', 'total')
-      .attr('x', 0)
-      .attr('y', height + fontSize)
-      .attr('font-family', 'Roboto')
-      .attr('font-size', fontSize + 'px')
-      .attr('font-weight', 'normal')
-      .attr('fill', '#7F828A')
-      .attr('text-anchor', 'start')
-      .text('Всего: ')
-      .append('tspan')
-      .attr('class', 'total-count')
-      .attr('font-family', 'Roboto')
-      .attr('font-size', fontSize + 'px')
-      .attr('font-weight', 'normal')
-      .attr('fill', '#1556BB');
+    if (loading) {
+      total
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', height)
+        .attr('width', 120)
+        .attr('height', fontSize * 1.2)
+        .attr('fill', '#DDE0E6');
+    } else {
+      total
+        .append('text')
+        .attr('class', 'total')
+        .attr('x', 0)
+        .attr('y', height + fontSize)
+        .attr('font-family', 'Roboto')
+        .attr('font-size', fontSize + 'px')
+        .attr('font-weight', 'normal')
+        .attr('fill', '#7F828A')
+        .attr('text-anchor', 'start')
+        .text('Всего: ')
+        .append('tspan')
+        .attr('class', 'total-count')
+        .attr('font-family', 'Roboto')
+        .attr('font-size', fontSize + 'px')
+        .attr('font-weight', 'normal')
+        .attr('fill', '#1556BB');
 
-    total
-      .selectAll('.total-count')
-      .transition()
-      .duration(animationDuration + data.length * animationStepDelay)
-      .tween('text', function (d: any, i: any, n: any) {
-        const total = data.reduce((prev, curr) => (prev += curr.value), 0);
-        const interpolator = d3.interpolateNumber(0, total); // d3 interpolator
-        const selection = d3.select(n[i]);
-        return (t: any) =>
-          selection.text(loading ? 'xx' : Math.round(interpolator(t))); // return value
-      });
+      total
+        .selectAll('.total-count')
+        .transition()
+        .duration(animationDuration + data.length * animationStepDelay)
+        .tween('text', function (d: any, i: any, n: any) {
+          const total = data.reduce((prev, curr) => (prev += curr.value), 0);
+          const interpolator = d3.interpolateNumber(0, total); // d3 interpolator
+          const selection = d3.select(n[i]);
+          return (t: any) => selection.text(Math.round(interpolator(t))); // return value
+        });
+    }
   };
 
   const clickHandler = (event: MouseEvent): void => {

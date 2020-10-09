@@ -67,6 +67,16 @@ ReactDOM.render(
         animationDuration={1000}
         animationStepDelay={100}
       />
+      <hr />
+      <App
+        data={data3}
+        showLabels={true}
+        showCounts={true}
+        loading={true}
+        showCountsInsteadLabels={false}
+        animationDuration={1000}
+        animationStepDelay={100}
+      />
     </div>
   </React.StrictMode>,
   document.getElementById('root')
