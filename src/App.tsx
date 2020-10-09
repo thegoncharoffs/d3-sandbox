@@ -1,300 +1,84 @@
-import React, { FC, useEffect, useRef } from 'react';
-import * as d3 from 'd3';
-import classNames from 'classnames';
+import React from 'react';
+import { FC } from 'react';
+import { HorizontalHistogramm } from './components/HorizontalHistogramm';
 import './App.scss';
 
-type Props = {
-  data: any[];
-  showLabels?: boolean;
-  showCounts?: boolean;
-  showTotal?: boolean;
-  showCountsInsteadLabels?: boolean;
-  clickableBars?: boolean;
-  loading?: boolean;
-  barWidth?: number;
-  barGutter?: number;
-  animationDuration?: number;
-  animationStepDelay?: number;
-  margin?: { top: number; right: number; bottom: number; left: number };
-  fontSize?: number;
-  onChartClick?: (item: any) => void;
-};
+const App: FC<{}> = () => {
+  const data = [
+    { label: 'Bob', value: 33, color: 'red', loading: true },
+    { label: 'Robin', value: 12, color: 'red', loading: true },
+    { label: 'Anne', value: 41, color: 'red', loading: true },
+    { label: 'Mark', value: 16, color: 'red', loading: true },
+    { label: 'Joe', value: 59, color: 'red', loading: true },
+    { label: 'Eve', value: 38, color: 'red', loading: true },
+    { label: 'Karen', value: 21, color: 'red' },
+    { label: 'Kirsty', value: 25, color: 'red' },
+    { label: 'Chris', value: 30, color: 'red', loading: true },
+    { label: 'Lisa', value: 47, color: 'red', loading: true },
+    { label: 'Tom', value: 5, color: 'red' },
+    { label: 'Stacy', value: 60, color: '#fgfgfg', loading: true },
+    { label: 'Charles', value: 13, color: 'orange', loading: true },
+    { label: 'Mary', value: 29, color: 'yellow' },
+  ];
 
-const App: FC<Props> = ({
-  data,
-  showLabels = false,
-  showCounts = false,
-  showTotal = true,
-  showCountsInsteadLabels = false,
-  clickableBars = false,
-  loading = false,
-  barWidth = 8,
-  barGutter = 16,
-  animationDuration = 300,
-  animationStepDelay = 0,
-  margin = { top: 10, right: 40, bottom: 10, left: 40 },
-  fontSize = 14,
-  onChartClick,
-}) => {
-  const container = useRef<SVGSVGElement>(null);
+  const data2 = [
+    { label: 'КИБ', value: 50 },
+    { label: 'СМБ', value: 12 },
+    { label: 'РБ', value: 41 },
+  ];
 
-  const classes = classNames('container-fluid', {
-    'clickable-bars': clickableBars,
-    loading: loading,
-  });
+  const data3 = [
+    { label: 'КИБ', value: 50, color: '#00AAFF' },
+    { label: 'СМБ', value: 12, color: '#B5E6FF' },
+    { label: 'РБ', value: 41, color: '#EBEEF2' },
+  ];
 
-  let bars: any;
-  let width: any;
-  let height: any;
-  let xScale: any;
-  let yScale: any;
-  let counts: any;
-  let labels: any;
-  let total: any;
-  let xDomain: any;
-  let yDomain: any;
-
-  const createChart = (): void => {
-    const element = container.current;
-    if (!element) {
-      return;
-    }
-
-    width = element.clientWidth - margin.left - margin.right;
-    height = element.clientHeight - margin.top - margin.bottom;
-    height = Math.min(height, (barWidth + barGutter) * data.length);
-
-    // Clear previous graph
-    d3.select(element).selectAll('*').remove();
-
-    const svg = d3
-      .select(element)
-      .attr('width', element.clientWidth)
-      .attr('height', element.clientHeight);
-
-    // Define X, Y domains
-    xDomain = [0, d3.max(data, (d) => d.value) as number];
-    yDomain = data.map((d) => d.label);
-
-    bars = svg
-      .append('g')
-      .attr('class', 'bars')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-    counts = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-    labels = svg.append('g').attr('transform', `translate(0, ${margin.top})`);
-
-    total = svg.append('g').attr('transform', `translate(0, ${margin.top})`);
-
-    xScale = d3.scaleLinear().domain(xDomain).range([0, width]);
-
-    yScale = d3.scaleBand().domain(yDomain).rangeRound([0, height]);
-  };
-
-  const drawBars = (): void => {
-    // Draw bars
-    bars
-      .selectAll('.bar')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('class', (d: any) => 'bar')
-      .attr('rx', 3)
-      .attr('ry', 3)
-      .attr('fill', (d: any) => (d.color ? d.color : '#2375E1'))
-      .attr('x', () => 2)
-      .attr('y', (d: any) => yScale(d.label))
-      .attr('height', () => (barWidth ? barWidth : yScale.bandwidth()))
-      .attr('index', (d: any, i: number) => i);
-
-    // Animate bars
-    bars
-      .selectAll('.bar')
-      .transition()
-      .duration(animationDuration)
-      .attr('width', (d: any) => xScale(d.value))
-      .delay((d: any, i: number) => i * animationStepDelay);
-  };
-
-  const drawCounts = (): void => {
-    if (loading) {
-      counts
-        .selectAll('.count-skeleton')
-        .data(data)
-        .enter()
-        .append('rect')
-        .attr('class', 'count-skeleton')
-        .attr('x', () => 0)
-        .attr('y', (d: any) => yScale(d.label) - fontSize / 2 + barWidth / 2)
-        .attr('width', fontSize * 2)
-        .attr('height', fontSize)
-        .attr('fill', '#E5F8FF');
-
-      counts
-        .selectAll('.count-skeleton')
-        .transition()
-        .duration(animationDuration)
-        .attr('x', (d: any) => xScale(d.value) + (d.value === 0 ? 0 : 8))
-        .delay((d: any, i: number) => i * animationStepDelay);
-    } else {
-      counts
-        .selectAll('.count')
-        .data(data)
-        .enter()
-        .append('text')
-        .attr('class', 'count')
-        .attr('x', () => 0)
-        .attr('y', (d: any) => yScale(d.label) + barWidth / 2)
-        .attr('font-family', 'Roboto')
-        .attr('font-size', fontSize + 'px')
-        .attr('font-weight', 'normal')
-        .attr('fill', '#1556BB')
-        .attr('text-anchor', 'start')
-        .attr('alignment-baseline', 'middle');
-
-      counts
-        .selectAll('.count')
-        .transition()
-        .duration(animationDuration)
-        .attr('x', (d: any) => xScale(d.value) + (d.value === 0 ? 0 : 8))
-        .tween('text', function (d: any, i: any, n: any) {
-          const interpolator = d3.interpolateNumber(0, d.value); // d3 interpolator
-          const selection = d3.select(n[i]);
-          return (t: any) =>
-            selection.text(loading ? 'xx' : Math.round(interpolator(t))); // return value
-        })
-        .delay((d: any, i: number) => i * animationStepDelay);
-    }
-  };
-
-  const drawLabels = (): void => {
-    if (loading) {
-      labels
-        .selectAll('.label-skeleton')
-        .data(data)
-        .enter()
-        .append('rect')
-        .attr('class', 'label-skeleton')
-        .attr('x', () => 0)
-        .attr('y', (d: any) => yScale(d.label) - fontSize / 2 + barWidth / 2)
-        .attr('width', fontSize * 2)
-        .attr('height', fontSize)
-        .attr('fill', showCountsInsteadLabels ? '#E5F8FF' : '#DDE0E6');
-    } else {
-      labels
-        .selectAll('.label')
-        .data(data)
-        .enter()
-        .append('text')
-        .attr('class', 'label')
-        .attr('x', () => 0)
-        .attr('y', (d: any) => yScale(d.label) + barWidth / 2)
-        .attr('font-family', 'Roboto')
-        .attr('font-size', fontSize + 'px')
-        .attr('font-weight', 'normal')
-        .attr('fill', showCountsInsteadLabels ? '#1556BB' : '#7F828A')
-        .attr('text-anchor', 'start')
-        .attr('alignment-baseline', 'middle')
-        .text((d: any) =>
-          showCountsInsteadLabels ? (loading ? 'xx' : d.value) : d.label
-        );
-    }
-  };
-
-  const drawTotal = (): void => {
-    if (loading) {
-      total
-        .append('rect')
-        .attr('x', 0)
-        .attr('y', height)
-        .attr('width', 120)
-        .attr('height', fontSize * 1.2)
-        .attr('fill', '#DDE0E6');
-    } else {
-      total
-        .append('text')
-        .attr('class', 'total')
-        .attr('x', 0)
-        .attr('y', height + fontSize)
-        .attr('font-family', 'Roboto')
-        .attr('font-size', fontSize + 'px')
-        .attr('font-weight', 'normal')
-        .attr('fill', '#7F828A')
-        .attr('text-anchor', 'start')
-        .text('Всего: ')
-        .append('tspan')
-        .attr('class', 'total-count')
-        .attr('font-family', 'Roboto')
-        .attr('font-size', fontSize + 'px')
-        .attr('font-weight', 'normal')
-        .attr('fill', '#1556BB');
-
-      total
-        .selectAll('.total-count')
-        .transition()
-        .duration(animationDuration + data.length * animationStepDelay)
-        .tween('text', function (d: any, i: any, n: any) {
-          const total = data.reduce((prev, curr) => (prev += curr.value), 0);
-          const interpolator = d3.interpolateNumber(0, total); // d3 interpolator
-          const selection = d3.select(n[i]);
-          return (t: any) => selection.text(Math.round(interpolator(t))); // return value
-        });
-    }
-  };
-
-  const clickHandler = (event: MouseEvent): void => {
-    const target = event.target as SVGRectElement;
-    const attributes = target.attributes;
-
-    if (
-      !loading &&
-      clickableBars &&
-      attributes.getNamedItem('class')?.nodeValue === 'bar'
-    ) {
-      const index = attributes.getNamedItem('index')?.nodeValue;
-      // @ts-ignore
-      onChartClick(data[index]);
-    }
-  };
-
-  const update = () => {
-    if (data && container.current) {
-      createChart();
-      drawBars();
-
-      if (showCounts) {
-        drawCounts();
-      }
-
-      if (showLabels) {
-        drawLabels();
-      }
-
-      if (showTotal) {
-        drawTotal();
-      }
-
-      container.current.addEventListener('click', clickHandler);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener('resize', update);
-
-    return () => {
-      window.removeEventListener('resize', update);
-      container.current?.removeEventListener('click', clickHandler);
-    };
-  }, []);
-
-  useEffect(() => {
-    update();
-  }, [data]);
-
-  return <svg className={classes} ref={container}></svg>;
+  return (
+    <div className="container">
+      <HorizontalHistogramm
+        data={data}
+        showLabels={true}
+        showCounts={true}
+        clickableBars={true}
+        animationDuration={1000}
+        animationStepDelay={100}
+        fontSize={14}
+        barWidth={8}
+        margin={{ top: 20, right: 80, bottom: 20, left: 60 }}
+        onChartClick={(item) => console.log(item)}
+      />
+      <hr />
+      <HorizontalHistogramm
+        data={data2}
+        showLabels={true}
+        showCounts={true}
+        clickableBars={true}
+        animationDuration={1000}
+        animationStepDelay={0}
+        onChartClick={(item) => console.log(item)}
+      />
+      <hr />
+      <HorizontalHistogramm
+        data={data3}
+        showLabels={true}
+        loading={false}
+        showCountsInsteadLabels={true}
+        animationDuration={1000}
+        animationStepDelay={100}
+      />
+      <hr />
+      <HorizontalHistogramm
+        data={data3}
+        showLabels={true}
+        showCounts={true}
+        showTotal={false}
+        loading={true}
+        showCountsInsteadLabels={false}
+        animationDuration={1000}
+        animationStepDelay={100}
+      />
+    </div>
+  );
 };
 
 export default App;
